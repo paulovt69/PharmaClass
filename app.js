@@ -90,3 +90,110 @@ function caseCheck(i){let v=$("#case"+i).value;if(!v){toast("Selecione uma respo
 async function boot(){await init();if(SUPABASE_URL.startsWith("http")&&!SUPABASE_URL.includes("COLE_AQUI")&&SUPABASE_ANON_KEY&&!SUPABASE_ANON_KEY.includes("COLE_AQUI")){try{supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);supabaseClient.auth.onAuthStateChange((event,session)=>{if(["INITIAL_SESSION","SIGNED_IN","SIGNED_OUT","USER_UPDATED","PASSWORD_RECOVERY"].includes(event))setTimeout(()=>showAuthenticatedSession(session),0)});const {data,error}=await supabaseClient.auth.getSession();if(error)throw error;await showAuthenticatedSession(data.session)}catch(err){authMessage("Falha ao iniciar a conexão com o Supabase. Confira a URL e a chave pública.",true);console.error(err)}}else{authMessage("Configure SUPABASE_URL e SUPABASE_ANON_KEY em js/app.js antes de usar.",true)}}
 setAuthMode("login");boot();
 
+
+$("#loginForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  if (authBusy) return;
+
+  if (!supabaseClient) {
+    authMessage(
+      "Erro de conexão. Verifique a URL e a chave pública do Supabase.",
+      true
+    );
+    return;
+  }
+
+  authBusy = true;
+  $("#authSubmit").disabled = true;
+
+  try {
+    const email = $("#loginEmail").value.trim();
+    const password = $("#loginPassword").value;
+
+    let result;
+
+    if (authMode === "signup") {
+      const display_name = $("#loginName").value.trim();
+
+      if (!display_name) {
+        throw new Error("Informe seu nome para exibição.");
+      }
+
+      if (!email || !password) {
+        throw new Error("Preencha o e-mail e a senha.");
+      }
+
+      authMessage("Criando sua conta...");
+
+      result = await supabaseClient.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            display_name
+          }
+        }
+      });
+
+      if (result.error) {
+        throw result.error;
+      }
+
+      if (result.data.session) {
+        await showAuthenticatedSession(result.data.session);
+      } else {
+        authMessage(
+          "Cadastro enviado! Verifique sua caixa de entrada e confirme seu e-mail antes de entrar."
+        );
+
+        setAuthMode("login");
+      }
+    } else {
+      if (!email || !password) {
+        throw new Error("Informe seu e-mail e sua senha.");
+      }
+
+      authMessage("Entrando na sua conta...");
+
+      result = await supabaseClient.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (result.error) {
+        throw result.error;
+      }
+
+      await showAuthenticatedSession(result.data.session);
+    }
+  } catch (err) {
+    console.error("Erro de autenticação:", err);
+
+    const message = err.message || "";
+
+    if (
+      message.toLowerCase().includes("email not confirmed")
+    ) {
+      authMessage(
+        "Seu e-mail ainda não foi confirmado. Verifique sua caixa de entrada e a pasta de spam.",
+        true
+      );
+    } else if (
+      message.toLowerCase().includes("invalid login credentials")
+    ) {
+      authMessage(
+        "E-mail ou senha incorretos. Confira os dados e tente novamente.",
+        true
+      );
+    } else {
+      authMessage(
+        message || "Não foi possível concluir a operação. Tente novamente.",
+        true
+      );
+    }
+  } finally {
+    authBusy = false;
+    $("#authSubmit").disabled = false;
+  }
+});
