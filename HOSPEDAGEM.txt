@@ -1,0 +1,16 @@
+CHECKLIST DE PUBLICAÇÃO — PHARMACLASS 3.0
+
+[ ] Criar projeto Supabase
+[ ] Executar PharmaClass_supabase_setup.sql
+[ ] Configurar URL e chave pública em js/app.js
+[ ] Configurar confirmação de e-mail e URLs de redirecionamento no Supabase
+[ ] Autorizar a primeira conta de professor via SQL, após confirmar a identidade
+[ ] Publicar por HTTPS
+[ ] Testar login, logout, recuperação de senha
+[ ] Professor cria e publica aula com link do YouTube
+[ ] Aluno abre aula no celular e no PC
+[ ] Marcar slide estudado e verificar que continua marcado em outro dispositivo
+[ ] Confirmar que outro aluno não vê o progresso dessa conta
+[ ] Confirmar que aluno não acessa ações de professor
+
+O link público só estará operacional depois de preencher as credenciais do seu projeto e executar o SQL. Não compartilhe chaves secretas.
